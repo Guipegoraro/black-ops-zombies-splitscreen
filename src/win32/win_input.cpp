@@ -54,6 +54,7 @@ int window_center_y;
 WinMouseVars_t s_wmv;
 
 const dvar_t *in_mouse;
+const dvar_t *in_keyboard;
 //const dvar_s *gpad_present;
 int in_appactive;
 
@@ -189,6 +190,7 @@ void __cdecl IN_Shutdown()
 void __cdecl IN_Init()
 {
     in_mouse = _Dvar_RegisterBool("in_mouse", 1, 0x21u, "Initialize the mouse drivers");
+    in_keyboard = _Dvar_RegisterBool("in_keyboard", 1, 0, "Read the keyboard (0: a splitscreen player on a game pad)");
     IN_Startup();
 }
 
@@ -210,20 +212,24 @@ void __cdecl IN_Frame()
         CL_SP_HeadlessMouseTest(); // p1 c30 TEST SWITCH bo1_mousetest: scripted mouse deltas only
         return;
     }
+    // zombies splitscreen: pads are read even with in_mouse 0 (a pad-only player), with gpad_port -1 never (the
+    // keyboard/mouse player), and with gpad_background 1 also while another player's window has the focus
+    bool readPads = gpad_port->current.integer >= 0
+                 && (in_appactive && IN_IsForegroundWindow() || gpad_background->current.enabled);
     if ( s_wmv.mouseInitialized )
     {
         if ( in_appactive )
         {
             IN_ActivateMouse(0);
             IN_MouseMove();
-            if ( IN_IsForegroundWindow() )
-                IN_GamepadsMove();
         }
         else
         {
             IN_DeactivateMouse();
         }
     }
+    if ( readPads )
+        IN_GamepadsMove();
 }
 
 void IN_GamepadsMove()

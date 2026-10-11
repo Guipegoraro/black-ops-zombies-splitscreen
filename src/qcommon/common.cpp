@@ -96,6 +96,8 @@
 #include <cgame/cg_sp_playtrace.h>
 #include <bgame/bg_misc.h>
 
+extern const dvar_t *in_keyboard; // win_input.cpp
+
 cmd_function_s Com_Error_f_VAR;
 cmd_function_s Com_Crash_f_VAR;
 cmd_function_s Com_Freeze_f_VAR;
@@ -1094,10 +1096,14 @@ void __cdecl Com_EventLoop()
             Com_ClientPacketEvent();
             return;
         case SE_KEY:
-            CL_KeyEvent(0, ev.evValue, ev.evValue2, ev.evTime);
+            // zombies splitscreen: in_keyboard 0 leaves this window to a game pad player (pad buttons don't come
+            // through here, mouse buttons do)
+            if ( !in_keyboard || in_keyboard->current.enabled )
+                CL_KeyEvent(0, ev.evValue, ev.evValue2, ev.evTime);
             break;
         case SE_CHAR:
-            CL_CharEvent(0, ev.evValue);
+            if ( !in_keyboard || in_keyboard->current.enabled )
+                CL_CharEvent(0, ev.evValue);
             break;
         case SE_CONSOLE:
             Con_Restricted_AddBuf((char *)ev.evPtr);
@@ -1770,6 +1776,11 @@ void __cdecl Com_Init(char *commandLine)
             Com_LoadUiFastFile();
         //BLOPS_NULLSUB();
         Com_LoadFrontEnd();
+        // splitscreen: +set bo1_join <ip:port> joins that game once the front end is up. A +connect on the command
+        // line runs in Com_AddStartupCommands, before this, and the front end's own local server drops it.
+        const dvar_t *bo1_join = _Dvar_RegisterString("bo1_join", "", 0, "Join this server (ip:port) after startup");
+        if ( *bo1_join->current.string )
+            Cbuf_AddText(0, va("connect %s\n", bo1_join->current.string));
     }
 
     if (IsDedicatedServer())

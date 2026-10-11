@@ -106,6 +106,7 @@ extern const dvar_s *bo1_testlostdevice;
 extern const dvar_s *bo1_testlostdevice_close;
 extern const dvar_s *bo1_testfocusloss;
 extern const dvar_s *r_borderless;
+extern const dvar_s *r_borderlessSize;
 extern const dvar_s *r_vsync;
 extern const dvar_s *r_clear;
 extern const dvar_s *r_clearColor;

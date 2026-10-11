@@ -70,3 +70,5 @@ extern const dvar_t *gpad_buttonsConfig;
 extern const dvar_t *gpad_sticksConfig;
 extern const dvar_t *gpad_enabled;
 extern const dvar_t *gpad_present;
+extern const dvar_t *gpad_port;
+extern const dvar_t *gpad_background;

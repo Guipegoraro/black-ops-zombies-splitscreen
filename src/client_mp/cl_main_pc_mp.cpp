@@ -370,8 +370,10 @@ void __cdecl CL_Connect_f()
         clc = CL_GetLocalClientConnection(0);
         clc->serverMessage[0] = 0;
         server = Cmd_Argv(1);
-        if ( !strcmp(server, "localhost") )
-            SV_KillLocalServer();
+        // splitscreen/LAN: also for a remote server. While a local server runs (the front end is one) every IP packet
+        // goes to it, not to the client (Com_ClientPacketEvent), so the remote challengeResponse would never arrive.
+        // Retail joined through DemonWare, which forwarded them (dwNet.cpp NET_DeferPacketToClient).
+        SV_KillLocalServer();
         cl_serverLoadingMap = 0;
         g_waitingForServer = 0;
         FS_DisablePureCheck(0);

@@ -1,4 +1,5 @@
 #include "r_init.h"
+#include <cstdio>
 #include <win32/win_main.h>
 #include <qcommon/common.h>
 
@@ -663,6 +664,8 @@ static void R_BorderlessSetWndParms(GfxWindowParms *wndParms)
 {
     POINT pt;
     MONITORINFO mi;
+    int width;
+    int height;
 
     pt.x = Dvar_GetInt("vid_xpos");
     pt.y = Dvar_GetInt("vid_ypos");
@@ -676,12 +679,21 @@ static void R_BorderlessSetWndParms(GfxWindowParms *wndParms)
     }
     wndParms->displayWidth = mi.rcMonitor.right - mi.rcMonitor.left;
     wndParms->displayHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
+    wndParms->x = mi.rcMonitor.left;
+    wndParms->y = mi.rcMonitor.top;
+    if ( r_borderlessSize && sscanf(r_borderlessSize->current.string, "%ix%i", &width, &height) == 2 && width >= 320
+        && height >= 240 )
+    {
+        // splitscreen: one tile of the monitor per player
+        wndParms->displayWidth = width;
+        wndParms->displayHeight = height;
+        wndParms->x = pt.x;
+        wndParms->y = pt.y;
+    }
     wndParms->sceneWidth = wndParms->displayWidth;
     wndParms->sceneHeight = wndParms->displayHeight;
     R_BorderlessSyncMode(wndParms->displayWidth, wndParms->displayHeight);
     wndParms->hz = 60;
-    wndParms->x = mi.rcMonitor.left;
-    wndParms->y = mi.rcMonitor.top;
     wndParms->hwnd = 0;
     wndParms->aaSamples = r_aaSamples->current.integer;
 }
@@ -743,7 +755,8 @@ void __cdecl R_CheckResizeWindow()
         || Dvar_HasLatchedValue(r_displayRefresh)
         || Dvar_HasLatchedValue(r_vsync)
         || Dvar_HasLatchedValue(r_fullscreen)
-        || Dvar_HasLatchedValue(r_borderless) ) // borderless: vid_restart applies a changed r_borderless
+        || Dvar_HasLatchedValue(r_borderless) // borderless: vid_restart applies a changed r_borderless
+        || Dvar_HasLatchedValue(r_borderlessSize) )
     {
         dx.resizeWindow = 1;
         while ( dx.resizeWindow )
@@ -768,6 +781,7 @@ void __cdecl R_ResizeWindow()
     Dvar_MakeLatchedValueCurrent((dvar_s*)r_fullscreen);
     Dvar_MakeLatchedValueCurrent((dvar_s*)r_displayRefresh);
     Dvar_MakeLatchedValueCurrent((dvar_s*)r_borderless); // borderless
+    Dvar_MakeLatchedValueCurrent((dvar_s*)r_borderlessSize); // splitscreen
     R_SetWndParms(&wndParms);
     R_StoreWindowSettings(&wndParms);
     hwnd = dx.windows[0].hwnd;

@@ -109,6 +109,7 @@ const dvar_s *bo1_testlostdevice; // zombies L5: see R_RegisterDvars
 const dvar_s *bo1_testlostdevice_close;
 const dvar_s *bo1_testfocusloss; // borderless: see R_RegisterDvars
 const dvar_s *r_borderless; // borderless: BO1Zombies's own (not in the exe), see R_RegisterDvars
+const dvar_s *r_borderlessSize; // splitscreen: a borderless window smaller than the monitor
 const dvar_s *r_vsync;
 const dvar_s *r_clear;
 const dvar_s *r_clearColor;
@@ -613,6 +614,13 @@ void __cdecl R_RegisterDvars()
         0,
         0x21u,
         "With r_fullscreen 0: full-screen borderless window at the monitor's native resolution (vid_restart to apply)");
+    // splitscreen: "WxH" makes the borderless window that size with its top left corner at vid_xpos/vid_ypos (desktop
+    // pixels), so one game window per player can tile the monitor. Empty: the whole monitor. Not archived.
+    r_borderlessSize = _Dvar_RegisterString(
+        "r_borderlessSize",
+        "",
+        0x20u,
+        "With r_borderless 1: window size WxH at vid_xpos/vid_ypos instead of the whole monitor (vid_restart to apply)");
     r_gamma = _Dvar_RegisterFloat("r_gamma", 0.89999998, 0.5, 3.0, 1u, "Gamma value");
     if ( r_reflectionProbeGenerate && r_reflectionProbeGenerate->current.enabled )
         Dvar_SetFloat((dvar_s *)r_gamma, 0.89999998);

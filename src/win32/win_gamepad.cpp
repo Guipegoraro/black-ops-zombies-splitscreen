@@ -21,6 +21,8 @@ const dvar_t *gpad_buttonsConfig;
 const dvar_t *gpad_sticksConfig;
 const dvar_t *gpad_enabled;
 const dvar_t *gpad_present;
+const dvar_t *gpad_port;
+const dvar_t *gpad_background;
 
 GamePad s_gamePads[1];
 int inputCounter;
@@ -28,6 +30,15 @@ bool hasInput[1];
 _XINPUT_STATE delayedInputState[1];
 void(__cdecl *s_removedCB)(int);
 void(__cdecl *s_insertedCB)(int);
+
+// zombies splitscreen: the engine has one game pad slot (port 0); gpad_port picks which XInput user (controller
+// 1-4) feeds it, so each game process of a splitscreen session reads its own controller.
+static DWORD GPad_XInputUser(int portIndex)
+{
+    if ( !gpad_port || gpad_port->current.integer < 0 )
+        return (DWORD)portIndex;
+    return (DWORD)(gpad_port->current.integer + portIndex);
+}
 
 void GPad_InitAll()
 {
@@ -111,13 +122,25 @@ void GPad_InitAll()
                                                 "Game pad stick configuration");
     gpad_enabled = _Dvar_RegisterBool("gpad_enabled", 0, 1u, "Game pad enabled");
     gpad_present = _Dvar_RegisterBool("gpad_present", 0, 0x40u, "Game pad present");
+    gpad_port = _Dvar_RegisterInt(
+                                   "gpad_port",
+                                   0,
+                                   -1,
+                                   3,
+                                   0,
+                                   "XInput controller this game reads (0-3 for controller 1-4, -1 none)");
+    gpad_background = _Dvar_RegisterBool(
+                                         "gpad_background",
+                                         0,
+                                         0,
+                                         "Read the game pad while the window is not focused (splitscreen)");
     for ( portIndex = 0; portIndex < 1; ++portIndex )
     {
         gPad = &s_gamePads[portIndex];
         gPad->feedback.Rumble.wLeftMotorSpeed = 0;
         gPad->feedback.Rumble.wRightMotorSpeed = 0;
         if ( !Sys_IsHeadless() ) // zombies: headless never writes to the user's game pad (rumble)
-            XInputSetState(portIndex, &gPad->feedback.Rumble);
+            XInputSetState(GPad_XInputUser(portIndex), &gPad->feedback.Rumble);
     }
 }
 
@@ -131,7 +154,7 @@ void __cdecl GPad_UpdateAll()
         GPad_RefreshAll();
         for ( portIndex = 0; portIndex < 1; ++portIndex )
         {
-            if ( !XInputGetState(portIndex, &inputState) )
+            if ( !XInputGetState(GPad_XInputUser(portIndex), &inputState) )
             {
                 GPad_UpdateSticks(portIndex, &inputState.Gamepad);
                 GPad_UpdateDigitals(portIndex, &inputState.Gamepad);
@@ -158,7 +181,7 @@ void __cdecl GPad_UpdateAll()
         {
             GPad_RefreshAll();
             for ( portIndex = 0; portIndex < 1; ++portIndex )
-                hasInput[portIndex] = XInputGetState(portIndex, &delayedInputState[portIndex]) == 0;
+                hasInput[portIndex] = XInputGetState(GPad_XInputUser(portIndex), &delayedInputState[portIndex]) == 0;
             inputCounter = 0;
         }
     }
@@ -194,7 +217,7 @@ void __cdecl GPad_Check(int portIndex)
     }
     gPad = &s_gamePads[portIndex];
     wasEnabled = gPad->enabled;
-    if ( XInputGetCapabilities(portIndex, 1u, &gPad->caps) )
+    if ( XInputGetCapabilities(GPad_XInputUser(portIndex), 1u, &gPad->caps) )
         gPad->enabled = 0;
     else
         gPad->enabled = 1;
