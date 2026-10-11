@@ -70,7 +70,8 @@ static XAnimTree_s **CG_SP_GetActorClientTreeSlot(int localClientNum, centity_s 
 
 // zombies: SP 0x00646710 (unnamed) - the anims of an entity's es.animtreeIndex: the server's anim tree list while
 // sv_running (0x00519160), else the client's (0x00583C90). 0 means the default actor anims (cg+0xBB618 -> +0x8D39C;
-// KB uses the listen server's actor anims, the MEASURED choice of CG_LoadAnimTreeInstances, cg_main_mp.cpp).
+// KB uses the listen server's actor anims, the MEASURED choice of CG_LoadAnimTreeInstances, cg_main_mp.cpp; a pure
+// client's own since splitscreen, CGScr_LoadScriptsAndAnims).
 static XAnim_s *CG_SP_GetActorClientAnims(const centity_s *cent)
 {
     if ( !cent->nextState.animtreeIndex )

@@ -108,6 +108,10 @@ try {
             Start-Sleep -Seconds 3
         }
     }
+    # the last window started has the focus; give it to player 1 (keyboard and mouse)
+    $shell = New-Object -ComObject WScript.Shell
+    Start-Sleep -Seconds 2
+    [void]$shell.AppActivate($procs[0].Id)
     "started $Players player(s)"
 } catch {
     # a failed start leaves no half session behind (the next run would refuse: 'already running')

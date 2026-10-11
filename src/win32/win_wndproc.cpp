@@ -3,6 +3,7 @@
 #include <gfx_d3d/r_init.h>
 #include "win_main.h"
 #include "win_input.h"
+#include "win_gamepad.h"
 #include <gfx_d3d/r_dvars.h>
 #include <client/cl_keys.h>
 #include <universal/com_memory.h>
@@ -496,7 +497,10 @@ void __cdecl VID_AppActivate(unsigned int activeState, int minimize)
     bool v2; // [esp+0h] [ebp-8h]
 
     g_wv.isMinimized = minimize;
-    Key_ClearStates(0);
+    // splitscreen: a pad player's window (gpad_background 1) keeps its held buttons when the focus moves between the
+    // players' windows; its keyboard is off (in_keyboard 0), so no key can stick
+    if ( !gpad_background || !gpad_background->current.enabled )
+        Key_ClearStates(0);
     v2 = activeState && !g_wv.isMinimized;
     g_wv.activeApp = v2;
     if ( v2 )

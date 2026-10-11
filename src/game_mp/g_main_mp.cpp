@@ -2589,7 +2589,7 @@ void __cdecl G_ShutdownGame(int freeScripts)
         Scr_FreeScripts(SCRIPTINSTANCE_SERVER, 1u);
         G_FreeAnimTreeInstances();
         Scr_ShutdownAnimTrees(1);
-        G_SP_ClearActorAnimTree(); // splitscreen: the tree was in the scripts just freed (a map_restart keeps it)
+        G_SP_ClearActorAnimTree(); // splitscreen: the tree is in the low hunk cleared below (a map_restart keeps it)
         Com_FreeWeaponInfoMemory(1);
         Hunk_ClearToMarkLow(0);
     }

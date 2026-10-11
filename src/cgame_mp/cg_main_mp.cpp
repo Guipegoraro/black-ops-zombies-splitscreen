@@ -3861,6 +3861,7 @@ void __cdecl CG_LoadAnimTreeInstances(int localClientNum)
     // asserted). MEASURED choice: the listen server's generic_human actor tree (G_SP_GetActorAnims, SP 0x005687F0),
     // the one the server side uses (g_main_mp.cpp G_LoadAnimTreeInstances). SP's client gets its own through
     // 0x004BD6F0(CLIENT, "generic_human", ...) in CScr_LoadScripts (SP 0x006555A0), not ported yet.
+    // splitscreen: a pure client (no listen server) finds its own in CGScr_LoadScriptsAndAnims, same layout.
     anims = Com_IsSPLevel() ? G_SP_GetActorAnims() : Dog_GetAnims(); // every SP level (the front end has actors, no dogs)
 
     iassert(anims);
