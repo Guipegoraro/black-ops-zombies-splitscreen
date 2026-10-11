@@ -10,3 +10,9 @@ Everything added to this PC to build and run BO1 Zombies, and how to undo it.
 ## Services, scheduled tasks, background processes
 
 None created.
+
+## Windows Firewall
+
+No rule created. On the first 3-player test Windows asked whether BO1Zombies (build\Splitscreen\p3) may use public and
+private networks; the prompt was left for the user. Splitscreen on one PC uses loopback only and works without it.
+Playing across PCs (BZ-007) needs "Permitir". To remove a rule later: Windows Security, Firewall, Allow an app.
