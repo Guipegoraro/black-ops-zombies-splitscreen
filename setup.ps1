@@ -21,10 +21,16 @@ Copy-Item (Join-Path $PSScriptRoot 'src\binklib\binkw32.dll') $dst -Force
 Copy-Item (Join-Path $PSScriptRoot 'src\steam\redistributable_bin\*.dll') $dst -Force
 # runtimes the exe needs that a fresh Windows lacks, put next to the exe so nothing has to be installed:
 # DirectX 9 (d3dx9_43, xinput1_3) out of the game's own Redist\DirectX, Visual C++ 2015-2022 (x86) out of Visual Studio
+# (an install without Redist\DirectX is fine when Windows already has both: the DirectX runtime put them in SysWOW64)
 $dx = Join-Path $dst 'Redist\DirectX'
-expand.exe (Join-Path $dx 'Jun2010_d3dx9_43_x86.cab') "-F:d3dx9_43.dll" $dst | Out-Null
-expand.exe (Join-Path $dx 'APR2007_xinput_x86.cab') "-F:xinput1_3.dll" $dst | Out-Null
-foreach ($f in 'd3dx9_43.dll', 'xinput1_3.dll') { if (-not (Test-Path (Join-Path $dst $f))) { throw "could not extract $f from $dx" } }
+$sys32 = Join-Path $env:SystemRoot 'SysWOW64'
+foreach ($c in @(@('d3dx9_43.dll', 'Jun2010_d3dx9_43_x86.cab'), @('xinput1_3.dll', 'APR2007_xinput_x86.cab'))) {
+    $f = $c[0]; $cab = Join-Path $dx $c[1]
+    if (Test-Path $cab) { expand.exe $cab "-F:$f" $dst | Out-Null }
+    if (-not (Test-Path (Join-Path $dst $f)) -and -not (Test-Path (Join-Path $sys32 $f))) {
+        throw "no ${f}: not in $dx and not in $sys32 (install the DirectX End-User Runtime)"
+    }
+}
 $crt = Get-ChildItem 'C:\Program Files*\Microsoft Visual Studio\*\*\VC\Redist\MSVC\*\x86\Microsoft.VC14*.CRT' -Directory -ErrorAction SilentlyContinue |
     Sort-Object FullName | Select-Object -Last 1
 if ($crt) { Copy-Item (Join-Path $crt.FullName 'msvcp140.dll'), (Join-Path $crt.FullName 'vcruntime140.dll') $dst -Force }

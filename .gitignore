@@ -426,3 +426,5 @@ FodyWeavers.xsd
 .idea/*
 Debug/*
 __BO1Zombies
+# local toolchain pieces (DirectX SDK headers/libs), see INSTALLED.md
+_deps/

@@ -1,0 +1,8 @@
+# Ordna config — all keys optional.
+storage: file
+tasksDir: tasks
+schema: ordna
+statuses: [idea, new, voce, doing, testing, finished]
+idPrefix: BZ
+zeroPaddedIds: 3
+webPort: 7421
