@@ -108,10 +108,13 @@ try {
             Start-Sleep -Seconds 3
         }
     }
-    # the last window started has the focus; give it to player 1 (keyboard and mouse)
-    $shell = New-Object -ComObject WScript.Shell
-    Start-Sleep -Seconds 2
-    [void]$shell.AppActivate($procs[0].Id)
+    # the last window started has the focus; give it to player 1's (the keyboard and mouse, unless -NoKeyboard).
+    # Windows may refuse and flash the taskbar instead: then click player 1's tile.
+    try {
+        $deadline = (Get-Date).AddSeconds(10)
+        while ($procs[0].MainWindowHandle -eq 0 -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250; $procs[0].Refresh() }
+        if (-not (New-Object -ComObject WScript.Shell).AppActivate($procs[0].Id)) { "could not focus player 1's window: click it" }
+    } catch { "could not focus player 1's window: click it" }
     "started $Players player(s)"
 } catch {
     # a failed start leaves no half session behind (the next run would refuse: 'already running')

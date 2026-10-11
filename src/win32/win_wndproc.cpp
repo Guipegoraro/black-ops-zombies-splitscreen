@@ -498,7 +498,7 @@ void __cdecl VID_AppActivate(unsigned int activeState, int minimize)
 
     g_wv.isMinimized = minimize;
     // splitscreen: a pad player's window (gpad_background 1) keeps its held buttons when the focus moves between the
-    // players' windows; its keyboard is off (in_keyboard 0), so no key can stick
+    // players' windows; its keyboard and mouse are off (in_keyboard 0, in_mouse 0), so only pad buttons are down
     if ( !gpad_background || !gpad_background->current.enabled )
         Key_ClearStates(0);
     v2 = activeState && !g_wv.isMinimized;
