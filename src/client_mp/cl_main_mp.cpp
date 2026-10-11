@@ -3907,6 +3907,7 @@ cmd_function_s CL_TakeHiResShot8_VAR;
 cmd_function_s CL_PlayLogo_f_VAR;
 cmd_function_s CL_Connect_f_VAR;
 cmd_function_s CL_Connect_f_VAR_SERVER;
+cmd_function_s CL_ConnectToAddress_f_VAR; // splitscreen
 cmd_function_s CL_Reconnect_f_VAR;
 cmd_function_s CL_Reconnect_f_VAR_SERVER;
 cmd_function_s CL_FindServers_f_VAR;
@@ -4290,6 +4291,7 @@ void __cdecl CL_InitOnceForAllClients()
     Cmd_AddCommandInternal("logo", CL_PlayLogo_f, &CL_PlayLogo_f_VAR);
     Cmd_AddCommandInternal("connect", Cbuf_AddServerText_f, &CL_Connect_f_VAR);
     Cmd_AddServerCommandInternal("connect", CL_Connect_f, &CL_Connect_f_VAR_SERVER);
+    Cmd_AddCommandInternal("bo1_connect", CL_ConnectToAddress_f, &CL_ConnectToAddress_f_VAR); // splitscreen
     Cmd_AddCommandInternal("reconnect", Cbuf_AddServerText_f, &CL_Reconnect_f_VAR);
     Cmd_AddServerCommandInternal("reconnect", CL_Reconnect_f, &CL_Reconnect_f_VAR_SERVER);
     Cmd_AddCommandInternal("findservers", CL_FindServers_f, &CL_FindServers_f_VAR);

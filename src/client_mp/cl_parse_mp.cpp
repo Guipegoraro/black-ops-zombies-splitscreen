@@ -388,6 +388,8 @@ void __cdecl CL_ParseGamestate(int localClientNum, msg_t *msg)
     MSG_ReadString(msg, mapname, 0x20u);
     MSG_ReadString(msg, gametype, 0x20u);
     serverConfigStringChecksum = MSG_ReadLong(msg);
+    if ( bo1_zombies && bo1_zombies->current.enabled )
+        Com_SetZombieModeForMap(mapname); // splitscreen: the entity reads below need it, the level is not loaded yet
     party = 1;
     if ( CCS_ShouldLoadConstConfigStrings(1) )
         CCS_LoadConstantConfigStrings(mapname, gametype);

@@ -2448,14 +2448,23 @@ void __cdecl CGScr_LoadScripts(const char *mapname, const char *gametype, Script
     CGScr_LoadScriptAndLabel(SCRIPTINSTANCE_SERVER, "codescripts/struct", "initstructs", functions);
     CGScr_LoadScriptAndLabel(SCRIPTINSTANCE_SERVER, "codescripts/struct", "createstruct", functions);
     CGScr_LoadScriptAndLabel(SCRIPTINSTANCE_SERVER, "codescripts/struct", "findstruct", functions);
-    CGScr_LoadScriptAndLabel(SCRIPTINSTANCE_SERVER, "maps/mp/_destructible", "CodeCallback_DestructibleEvent", functions);
-    CGScr_LoadScriptAndLabel(
-        SCRIPTINSTANCE_SERVER,
-        "maps/mp/gametypes/_spawning",
-        "CodeCallback_UpdateSpawnPoints",
-        functions);
-    CGScr_LoadGameTypeScript(SCRIPTINSTANCE_SERVER, gametype, functions);
-    CGScr_LoadLevelScript(SCRIPTINSTANCE_SERVER, mapname, functions);
+    if ( G_SP_IsSPLevel() )
+    {
+        // splitscreen: a client of a remote zombies server compiles the SP scripts that server runs (GScr_LoadScripts),
+        // for their anim trees; the MP set (maps/mp/...) is not in the zombie zones.
+        GScr_SP_LoadScripts(SCRIPTINSTANCE_SERVER);
+    }
+    else
+    {
+        CGScr_LoadScriptAndLabel(SCRIPTINSTANCE_SERVER, "maps/mp/_destructible", "CodeCallback_DestructibleEvent", functions);
+        CGScr_LoadScriptAndLabel(
+            SCRIPTINSTANCE_SERVER,
+            "maps/mp/gametypes/_spawning",
+            "CodeCallback_UpdateSpawnPoints",
+            functions);
+        CGScr_LoadGameTypeScript(SCRIPTINSTANCE_SERVER, gametype, functions);
+        CGScr_LoadLevelScript(SCRIPTINSTANCE_SERVER, mapname, functions);
+    }
     G_ResetEntityParsePoint();
     Scr_PostCompileScripts(SCRIPTINSTANCE_SERVER);
     Scr_EndLoadScripts(SCRIPTINSTANCE_SERVER);
@@ -2760,7 +2769,9 @@ int __cdecl CachedTag_UpdateTagInternal(
     }
     else
     {
-        Com_Error(ERR_DROP, "CachedTag_UpdateTagInternal: Cannot find dobj on entity\n");
+        // splitscreen: a zombies coop player that just joined has no client DObj for its first frames; the friendly
+        // name and aim assist asked for its head tag and the host dropped. Keep the last tag, as
+        // CachedTag_NoCache_GetTagPos falls back to the origin.
         return 0;
     }
 }

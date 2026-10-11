@@ -98,6 +98,13 @@
 
 extern const dvar_t *in_keyboard; // win_input.cpp
 
+// splitscreen: in_keyboard 0 leaves this window to a game pad player. Pad buttons don't come through SE_KEY, mouse
+// buttons do.
+static bool Com_KeyboardEnabled()
+{
+    return !in_keyboard || in_keyboard->current.enabled;
+}
+
 cmd_function_s Com_Error_f_VAR;
 cmd_function_s Com_Crash_f_VAR;
 cmd_function_s Com_Freeze_f_VAR;
@@ -1096,13 +1103,11 @@ void __cdecl Com_EventLoop()
             Com_ClientPacketEvent();
             return;
         case SE_KEY:
-            // zombies splitscreen: in_keyboard 0 leaves this window to a game pad player (pad buttons don't come
-            // through here, mouse buttons do)
-            if ( !in_keyboard || in_keyboard->current.enabled )
+            if ( Com_KeyboardEnabled() )
                 CL_KeyEvent(0, ev.evValue, ev.evValue2, ev.evTime);
             break;
         case SE_CHAR:
-            if ( !in_keyboard || in_keyboard->current.enabled )
+            if ( Com_KeyboardEnabled() )
                 CL_CharEvent(0, ev.evValue);
             break;
         case SE_CONSOLE:
@@ -1780,7 +1785,7 @@ void __cdecl Com_Init(char *commandLine)
         // line runs in Com_AddStartupCommands, before this, and the front end's own local server drops it.
         const dvar_t *bo1_join = _Dvar_RegisterString("bo1_join", "", 0, "Join this server (ip:port) after startup");
         if ( *bo1_join->current.string )
-            Cbuf_AddText(0, va("connect %s\n", bo1_join->current.string));
+            Cbuf_AddText(0, va("bo1_connect %s\n", bo1_join->current.string));
     }
 
     if (IsDedicatedServer())
@@ -2893,6 +2898,32 @@ void __cdecl Com_UnloadLevelFastFiles()
     }
 }
 
+// zombies: SP's frontend sets zombiemode before a zombie map loads (main_menu 'setdvar zombiemode 1');
+// this exe has no zombies frontend, so derive it from the map name (and clear it for MP maps).
+// Com_LoadCommonFastFile then picks common_zombie as SP's does (SP exe 0x0082CB50).
+// zombies: the SP front end keeps zombiemode as its menus set it (SP 0x008338F0 skips "frontend").
+// splitscreen: also called by CL_ParseGamestate, whose entity reads depend on zombiemode (MSG_ReadOriginFloat) before
+// a joining client has loaded the level.
+void __cdecl Com_SetZombieModeForMap(const char *mapName)
+{
+    if ( !Com_IsMenuLevel(mapName) && !Com_IsSPFrontEndLevel(mapName) )
+        Dvar_SetBool((dvar_s *)zombiemode, Com_IsZombieMap(mapName));
+    if ( I_stristr(mapName, "zombietron") )
+    {
+        Dvar_SetBool((dvar_s *)zombiemode, 1);
+        Dvar_SetBool((dvar_s *)zombietron, 1);
+    }
+    if ( I_stristr(mapName, "zombie_cod5_") )
+    {
+        Dvar_SetBool((dvar_s *)zombiemode, 1);
+        Dvar_SetBool((dvar_s *)legacy_zombiemode, 1);
+    }
+    else
+    {
+        Dvar_SetBool((dvar_s *)legacy_zombiemode, 0);
+    }
+}
+
 void __cdecl Com_LoadLevelFastFiles(char *mapName)
 {
     int ControllerIndex; // eax
@@ -2922,26 +2953,7 @@ void __cdecl Com_LoadLevelFastFiles(char *mapName)
         zoneInfo[zoneCount].allocFlags = 0x4000000;
         zoneInfo[zoneCount++].freeFlags = 0;
     }
-    // zombies: SP's frontend sets zombiemode before a zombie map loads (main_menu 'setdvar zombiemode 1');
-    // this exe has no zombies frontend, so derive it from the map name (and clear it for MP maps).
-    // Com_LoadCommonFastFile then picks common_zombie as SP's does (SP exe 0x0082CB50).
-    // zombies: the SP front end keeps zombiemode as its menus set it (SP 0x008338F0 skips "frontend").
-    if ( !Com_IsMenuLevel(mapName) && !spFrontEnd )
-        Dvar_SetBool((dvar_s *)zombiemode, Com_IsZombieMap(mapName));
-    if ( I_stristr(mapName, "zombietron") )
-    {
-        Dvar_SetBool((dvar_s *)zombiemode, 1);
-        Dvar_SetBool((dvar_s *)zombietron, 1);
-    }
-    if ( I_stristr(mapName, "zombie_cod5_") )
-    {
-        Dvar_SetBool((dvar_s *)zombiemode, 1);
-        Dvar_SetBool((dvar_s *)legacy_zombiemode, 1);
-    }
-    else
-    {
-        Dvar_SetBool((dvar_s *)legacy_zombiemode, 0);
-    }
+    Com_SetZombieModeForMap(mapName);
     // zombies: SP applies its script settings in Com_Restart with zombiemode already set by the frontend;
     // here zombiemode is only known now (after Com_Restart), so reapply them before the level's scripts
     // compile. Without this the zombiemode gate in Scr_Settings saw the boot value (0) and dev blocks
@@ -3098,7 +3110,10 @@ void Com_LoadCommonFastFile()
             zoneInfo[zoneCount++].freeFlags = 0;
         }
     }
-    else if ( !DB_IsZoneLoaded("common_mp") )
+    // splitscreen: a bo1_zombies boot never loads common_mp (see DB_LoadFastFilesForPC). Leaving the front end to
+    // join a server (Com_AssetLoadUIWithMsg) lands here with zombiemode still 0: common_mp on top of both code zone
+    // sets overflowed the 16 font assets. The level load picks common_zombie once the map is known.
+    else if ( !bo1_zombies->current.enabled && !DB_IsZoneLoaded("common_mp") )
     {
         zoneInfo[zoneCount].name = "common_mp";
         zoneInfo[zoneCount].allocFlags = 256;

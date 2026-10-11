@@ -21,8 +21,8 @@ const dvar_t *gpad_buttonsConfig;
 const dvar_t *gpad_sticksConfig;
 const dvar_t *gpad_enabled;
 const dvar_t *gpad_present;
-const dvar_t *gpad_port;
-const dvar_t *gpad_background;
+const dvar_t *gpad_port; // splitscreen: BO1Zombies's own, see GPad_XInputUser
+const dvar_t *gpad_background; // splitscreen: BO1Zombies's own, see IN_Frame
 
 GamePad s_gamePads[1];
 int inputCounter;
@@ -31,13 +31,16 @@ _XINPUT_STATE delayedInputState[1];
 void(__cdecl *s_removedCB)(int);
 void(__cdecl *s_insertedCB)(int);
 
-// zombies splitscreen: the engine has one game pad slot (port 0); gpad_port picks which XInput user (controller
-// 1-4) feeds it, so each game process of a splitscreen session reads its own controller.
+// splitscreen: the engine has one game pad slot (port 0); gpad_port picks which XInput user (controller 1-4) feeds
+// it, so each game process of a splitscreen session reads its own controller. gpad_port -1 gives XUSER_MAX_COUNT,
+// which XInput refuses (ERROR_BAD_ARGUMENTS): no pad is found, read or rumbled.
 static DWORD GPad_XInputUser(int portIndex)
 {
-    if ( !gpad_port || gpad_port->current.integer < 0 )
+    if ( !gpad_port )
         return (DWORD)portIndex;
-    return (DWORD)(gpad_port->current.integer + portIndex);
+    if ( gpad_port->current.integer < 0 )
+        return XUSER_MAX_COUNT;
+    return (DWORD)gpad_port->current.integer;
 }
 
 void GPad_InitAll()

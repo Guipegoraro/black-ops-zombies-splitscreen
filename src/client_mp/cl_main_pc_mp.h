@@ -36,6 +36,7 @@ void __cdecl CL_ServerInfoPacket(bdSecurityID *secID, msg_t *msg, int time);
 void __cdecl CL_Connect(serverInfo_t *server);
 void __cdecl CL_ConnectHackDW();
 void __cdecl CL_Connect_f();
+void __cdecl CL_ConnectToAddress_f();
 void __cdecl CL_PC_SignInLive();
 void __cdecl CL_InitServerInfo(serverInfo_t *server, netadr_t adr);
 int __cdecl CL_RawPingSetupBuffer(

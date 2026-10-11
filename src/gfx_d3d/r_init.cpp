@@ -681,7 +681,7 @@ static void R_BorderlessSetWndParms(GfxWindowParms *wndParms)
     wndParms->displayHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
     wndParms->x = mi.rcMonitor.left;
     wndParms->y = mi.rcMonitor.top;
-    if ( r_borderlessSize && sscanf(r_borderlessSize->current.string, "%ix%i", &width, &height) == 2 && width >= 320
+    if ( r_borderlessSize && sscanf(r_borderlessSize->current.string, "%dx%d", &width, &height) == 2 && width >= 320
         && height >= 240 )
     {
         // splitscreen: one tile of the monitor per player

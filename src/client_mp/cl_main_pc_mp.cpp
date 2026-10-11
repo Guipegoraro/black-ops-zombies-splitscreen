@@ -331,6 +331,30 @@ void __cdecl CL_Connect(serverInfo_t *server)
     }
 }
 
+// splitscreen: bo1_connect <ip:port> joins a server the way the server browser does (CL_Connect). `connect` keeps the
+// front end's local server running, and while one runs every IP packet goes to it, not to the client
+// (Com_ClientPacketEvent), so the remote server's challengeResponse never reaches the client.
+void __cdecl CL_ConnectToAddress_f()
+{
+    serverInfo_t server;
+    netadr_t adr;
+
+    if ( Cmd_Argc() != 2 )
+    {
+        Com_Printf(0, "usage: bo1_connect <ip:port>\n");
+        return;
+    }
+    if ( !NET_StringToAdr(Cmd_Argv(1), &adr) )
+    {
+        Com_Printf(0, "Bad server address %s\n", Cmd_Argv(1));
+        return;
+    }
+    memset(&server, 0, sizeof(server));
+    CL_InitServerInfo(&server, adr);
+    I_strncpyz(server.hostName, Cmd_Argv(1), sizeof(server.hostName));
+    CL_Connect(&server);
+}
+
 void __cdecl CL_ConnectHackDW()
 {
     const char *v0; // eax
@@ -370,10 +394,8 @@ void __cdecl CL_Connect_f()
         clc = CL_GetLocalClientConnection(0);
         clc->serverMessage[0] = 0;
         server = Cmd_Argv(1);
-        // splitscreen/LAN: also for a remote server. While a local server runs (the front end is one) every IP packet
-        // goes to it, not to the client (Com_ClientPacketEvent), so the remote challengeResponse would never arrive.
-        // Retail joined through DemonWare, which forwarded them (dwNet.cpp NET_DeferPacketToClient).
-        SV_KillLocalServer();
+        if ( !strcmp(server, "localhost") )
+            SV_KillLocalServer();
         cl_serverLoadingMap = 0;
         g_waitingForServer = 0;
         FS_DisablePureCheck(0);
