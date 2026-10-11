@@ -3113,7 +3113,7 @@ void Com_LoadCommonFastFile()
     // splitscreen: a bo1_zombies boot never loads common_mp (see DB_LoadFastFilesForPC). Leaving the front end to
     // join a server (Com_AssetLoadUIWithMsg) lands here with zombiemode still 0: common_mp on top of both code zone
     // sets overflowed the 16 font assets. The level load picks common_zombie once the map is known.
-    else if ( !bo1_zombies->current.enabled && !DB_IsZoneLoaded("common_mp") )
+    else if ( !(bo1_zombies && bo1_zombies->current.enabled) && !DB_IsZoneLoaded("common_mp") )
     {
         zoneInfo[zoneCount].name = "common_mp";
         zoneInfo[zoneCount].allocFlags = 256;

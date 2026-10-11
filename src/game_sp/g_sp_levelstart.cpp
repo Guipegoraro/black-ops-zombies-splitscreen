@@ -470,3 +470,9 @@ XAnim_s *G_SP_GetActorAnims()
 {
     return g_actorAnimsSP;
 }
+
+// splitscreen: the tree lives in the server's script hunk; once that is freed a joining client must not reuse it.
+void G_SP_ClearActorAnimTree()
+{
+    g_actorAnimsSP = 0;
+}

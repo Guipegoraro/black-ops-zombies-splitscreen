@@ -2770,8 +2770,11 @@ int __cdecl CachedTag_UpdateTagInternal(
     else
     {
         // splitscreen: a zombies coop player that just joined has no client DObj for its first frames; the friendly
-        // name and aim assist asked for its head tag and the host dropped. Keep the last tag, as
-        // CachedTag_NoCache_GetTagPos falls back to the origin.
+        // name and aim assist asked for its head tag and the host dropped. Report no tag (the caller's position is
+        // the origin plus the last cached offset), as CachedTag_NoCache_GetTagPos does. MP keeps the drop.
+        if ( bo1_zombies && bo1_zombies->current.enabled )
+            return 0;
+        Com_Error(ERR_DROP, "CachedTag_UpdateTagInternal: Cannot find dobj on entity\n");
         return 0;
     }
 }
@@ -3804,6 +3807,10 @@ int CGScr_LoadScriptsAndAnims()
     gametype = Dvar_GetString("g_gametype");
     CGScr_LoadScripts(mapname, gametype, &functions);
     BG_LoadAnim(mapname);
+    // splitscreen: a client of a remote zombies server finds the actors' generic_human tree in the scripts it just
+    // compiled, as the server does (G_InitGame); else G_SP_GetActorAnims still holds the freed front end's tree.
+    if ( G_SP_IsSPLevel() )
+        G_SP_FindActorAnimTree();
     BG_PostLoadAnim(mapname);
     return functions.count;
 }

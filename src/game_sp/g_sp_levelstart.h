@@ -49,6 +49,7 @@ void G_SP_RunAITypeLoadScripts();
 // animtree every SP actor uses (.data 0x01C79B60), required. G_SP_GetActorAnims returns it.
 void G_SP_FindActorAnimTree();
 struct XAnim_s *G_SP_GetActorAnims();
+void G_SP_ClearActorAnimTree(); // splitscreen: G_ShutdownGame
 
 // Scr_StartLevelMain, SP 0x004B7F80: the gametype script (if any), then maps/<mapname>::main,
 // each as a thread on level, inside G_InitGame.
